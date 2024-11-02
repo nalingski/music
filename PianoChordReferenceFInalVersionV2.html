@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Piano Reference Tool</title>
+    <style>
+        /* Previous styles remain the same until .key.selected */
+        body {
+            display: flex;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .menu {
+            width: 200px;
+            padding: 20px;
+            background: #f0f0f0;
+            margin-right: 20px;
+        }
+
+        .toggle-button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .progression-button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: none;
+            cursor: pointer;
+        }
+
+        .scale-button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            cursor: pointer;
+            border: none;
+            background: #fff;
+        }
+
+        .scale-button:hover {
+            background: #e0e0e0;
+        }
+
+        .piano-container {
+            flex-grow: 1;
+        }
+
+        .piano-row {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .row-title {
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px dashed #ccc;
+            min-height: 20px;
+            cursor: pointer;
+        }
+
+        .row-title:focus {
+            outline: none;
+            border: 1px solid #999;
+        }
+
+        .row-title.active {
+            background: #e0e0e0;
+            border: 1px solid #999;
+        }
+
+        .piano-keys {
+            display: flex;
+            position: relative;
+            height: 100px;
+        }
+
+        .key {
+            border: 1px solid #000;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .white-key {
+            width: 40px;
+            height: 100%;
+            background: white;
+            z-index: 1;
+        }
+
+        .black-key {
+            width: 24px;
+            height: 60%;
+            background: black;
+            margin-left: -12px;
+            margin-right: -12px;
+            z-index: 2;
+        }
+
+        /* Enhanced selection styling */
+        .white-key.selected {
+            background-image: repeating-linear-gradient(45deg, 
+                transparent,
+                transparent 5px,
+                rgba(255, 102, 102, 1) 5px,  /* Cornflower blue with transparency */
+                rgba(255, 102, 102, 1) 10px
+            );
+            background-color: rgba(255, 255, 255, 0.9);  /* Slightly transparent white */
+        }
+
+        .black-key.selected {
+            background-image: repeating-linear-gradient(45deg, 
+                transparent,
+                transparent 5px,
+                rgba(255, 102, 102, 1) 5px,  /* Sky blue with transparency */
+                rgba(255, 102, 102, 1) 10px
+            );
+            background-color: rgba(0, 0, 0, 0.9);  /* Slightly transparent black */
+        }
+
+        /* Print-specific styles */
+        @media print {
+            .menu, .print-button {
+                display: none !important;
+            }
+
+            .piano-container {
+                width: 100% !important;
+            }
+
+            .white-key.selected {
+                background-image: repeating-linear-gradient(45deg, 
+                    transparent,
+                    transparent 5px,
+                    rgba(0, 0, 0, 0.15) 5px,
+                    rgba(0, 0, 0, 0.15) 10px
+                ) !important;
+            }
+
+            .black-key.selected {
+                background-image: repeating-linear-gradient(45deg, 
+                    transparent,
+                    transparent 5px,
+                    rgba(255, 255, 255, 0.4) 5px,
+                    rgba(255, 255, 255, 0.4) 10px
+                ) !important;
+            }
+
+            body {
+                padding: 0;
+                margin: 0;
+            }
+
+            .row-title {
+                border: 1px solid #000;
+            }
+        }
+
+        .key-label {
+            position: absolute;
+            bottom: 5px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .black-key .key-label {
+            color: white;
+            bottom: 2px;
+        }
+
+        .alt-notation {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        /* Print button styling */
+        .print-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.3s;
+        }
+
+        .print-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="menu">
+        <button class="toggle-button">Scales Mode</button>
+        <button class="progression-button">Show Chord Progressions</button>
+        <button class="scale-button" data-note="C" data-alt="">C</button>
+        <button class="scale-button" data-note="C#" data-alt="D♭">C# / D♭</button>
+        <button class="scale-button" data-note="D" data-alt="">D</button>
+        <button class="scale-button" data-note="D#" data-alt="E♭">D# / E♭</button>
+        <button class="scale-button" data-note="E" data-alt="">E</button>
+        <button class="scale-button" data-note="F" data-alt="">F</button>
+        <button class="scale-button" data-note="F#" data-alt="G♭">F# / G♭</button>
+        <button class="scale-button" data-note="G" data-alt="">G</button>
+        <button class="scale-button" data-note="G#" data-alt="A♭">G# / A♭</button>
+        <button class="scale-button" data-note="A" data-alt="">A</button>
+        <button class="scale-button" data-note="A#" data-alt="B♭">A# / B♭</button>
+        <button class="scale-button" data-note="B" data-alt="">B</button>
+    </div>
+    <div class="piano-container" id="pianoContainer">
+    </div>
+    <button class="print-button" onclick="window.print()">🖨️ Print</button>
+
+    <script>
+        // Previous JavaScript code remains exactly the same
+        document.addEventListener('DOMContentLoaded', function() {
+            const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const flatNotation = {
+                'C#': 'D♭',
+                'D#': 'E♭',
+                'F#': 'G♭',
+                'G#': 'A♭',
+                'A#': 'B♭'
+            };
+            let isChordMode = false;
+            let currentScale = 'C';
+            let activeRowIndex = 0;
+
+            function createPianoRows(count) {
+                const container = document.getElementById('pianoContainer');
+                container.innerHTML = '';
+
+                for (let i = 0; i < count; i++) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'piano-row';
+
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'row-title' + (i === 0 ? ' active' : '');
+                    titleDiv.contentEditable = true;
+                    titleDiv.dataset.rowIndex = i;
+                    titleDiv.addEventListener('click', function() {
+                        activeRowIndex = parseInt(this.dataset.rowIndex);
+                        document.querySelectorAll('.row-title').forEach(title => {
+                            title.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                    });
+
+                    const keysDiv = document.createElement('div');
+                    keysDiv.className = 'piano-keys';
+
+                    for (let octave = 0; octave < 3; octave++) {
+                        notes.forEach((note, index) => {
+                            const keyDiv = document.createElement('div');
+                            const isBlack = note.includes('#');
+                            keyDiv.className = `key ${isBlack ? 'black-key' : 'white-key'}`;
+                            keyDiv.dataset.note = note;
+                            keyDiv.dataset.octave = octave;
+
+                            const labelDiv = document.createElement('div');
+                            labelDiv.className = 'key-label';
+                            if (flatNotation[note]) {
+                                labelDiv.innerHTML = `${note}<br><span class="alt-notation">${flatNotation[note]}</span>`;
+                            } else {
+                                labelDiv.textContent = note;
+                            }
+
+                            keyDiv.appendChild(labelDiv);
+                            keyDiv.addEventListener('click', () => toggleKey(keyDiv));
+
+                            if (!isBlack) {
+                                keysDiv.appendChild(keyDiv);
+                            } else {
+                                keysDiv.lastChild.insertAdjacentElement('afterend', keyDiv);
+                            }
+                        });
+                    }
+
+                    rowDiv.appendChild(titleDiv);
+                    rowDiv.appendChild(keysDiv);
+                    container.appendChild(rowDiv);
+                }
+
+                updateMenuText();
+                loadDefaultScales();
+            }
+
+            function toggleKey(keyDiv) {
+                keyDiv.classList.toggle('selected');
+            }
+
+            function getScaleNotes(root) {
+                const majorScale = [0, 2, 4, 5, 7, 9, 11];
+                const rootIndex = notes.indexOf(root);
+                return majorScale.map(interval => {
+                    const noteIndex = (rootIndex + interval) % 12;
+                    const octave = Math.floor((rootIndex + interval) / 12);
+                    return { note: notes[noteIndex], octave };
+                });
+            }
+
+            function getChordNotes(root) {
+                const majorChord = [0, 4, 7];
+                const rootIndex = notes.indexOf(root);
+                return majorChord.map(interval => {
+                    const noteIndex = (rootIndex + interval) % 12;
+                    const octave = Math.floor((rootIndex + interval) / 12);
+                    return { note: notes[noteIndex], octave };
+                });
+            }
+
+            function loadDefaultScales() {
+                const defaultNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+                defaultNotes.forEach((note, index) => {
+                    applyScale(note, index);
+                });
+            }
+
+            function applyScale(root, rowIndex = activeRowIndex) {
+                const pianoRow = document.querySelectorAll('.piano-row')[rowIndex];
+                const titleDiv = pianoRow.querySelector('.row-title');
+                
+                pianoRow.querySelectorAll('.key').forEach(key => {
+                    key.classList.remove('selected');
+                });
+
+                if (isChordMode) {
+                    const chordNotes = getChordNotes(root);
+                    chordNotes.forEach(({note, octave}) => {
+                        const key = pianoRow.querySelector(`.key[data-note="${note}"][data-octave="${octave}"]`);
+                        if (key) key.classList.add('selected');
+                    });
+                    const altNotation = flatNotation[root] ? ` / ${flatNotation[root]}` : '';
+                    titleDiv.textContent = `${root}${altNotation} Major Chord`;
+                } else {
+                    const scaleNotes = getScaleNotes(root);
+                    scaleNotes.forEach(({note, octave}) => {
+                        const key = pianoRow.querySelector(`.key[data-note="${note}"][data-octave="${octave}"]`);
+                        if (key) key.classList.add('selected');
+                    });
+                    const altNotation = flatNotation[root] ? ` / ${flatNotation[root]}` : '';
+                    titleDiv.textContent = `${root}${altNotation} Major Scale`;
+                }
+            }
+
+            function updateMenuText() {
+                document.querySelectorAll('.scale-button').forEach(button => {
+                    const note = button.dataset.note;
+                    const alt = button.dataset.alt;
+                    button.textContent = `${note}${alt ? ' / ' + alt : ''} ${isChordMode ? 'Chord' : 'Scale'}`;
+                });
+            }
+
+            // Event Listeners
+            document.querySelector('.toggle-button').addEventListener('click', function() {
+                isChordMode = !isChordMode;
+                this.textContent = isChordMode ? 'Chords Mode' : 'Scales Mode';
+                document.querySelector('.progression-button').style.display = 
+                    isChordMode ? 'block' : 'none';
+                updateMenuText();
+                const activeRow = document.querySelector('.row-title.active');
+                if (activeRow) {
+                    applyScale(currentScale, parseInt(activeRow.dataset.rowIndex));
+                }
+            });
+
+            document.querySelectorAll('.scale-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const note = this.dataset.note;
+                    currentScale = note;
+                    applyScale(note);
+                });
+            });
+
+            // Initialize the piano
+            createPianoRows(7);
+        });
+    </script>
+</body>
+</html>
